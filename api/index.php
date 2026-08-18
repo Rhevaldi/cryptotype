@@ -5,13 +5,13 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// 1. Layani berkas statis/favicon jika ada
+// Fast-fail untuk file statis / favicon
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 if ($uri !== '/' && file_exists(__DIR__ . '/../public' . $uri)) {
     return false;
 }
 
-// 2. Siapkan direktori writable di /tmp
+// Siapkan folder temporary writable
 $storagePath = '/tmp/storage';
 $directories = [
     $storagePath . '/framework/views',
@@ -26,7 +26,7 @@ foreach ($directories as $dir) {
     }
 }
 
-// 3. Set environment variable darurat
+// Environment overrides
 putenv("APP_STORAGE_PATH={$storagePath}");
 putenv("VIEW_COMPILED_PATH={$storagePath}/framework/views");
 putenv("CACHE_STORE=array");
@@ -36,16 +36,21 @@ if (!getenv('APP_KEY')) {
     putenv("APP_KEY=base64:Ng47AWRkBEnNJLUxO3BrPop7gUTFARilAPmZc/jIP0A=");
 }
 
-// 4. Autoload Composer
-require __DIR__ . '/../vendor/autoload.php';
+try {
+    require __DIR__ . '/../vendor/autoload.php';
+    $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// 5. Bootstrap Aplikasi
-$app = require_once __DIR__ . '/../bootstrap/app.php';
+    $kernel = $app->make(Kernel::class);
+    $response = $kernel->handle(
+        $request = Request::capture()
+    )->send();
 
-// 6. Tangani Request menggunakan Kernel/Runner bawaan
-$kernel = $app->make(Kernel::class);
-$response = $kernel->handle(
-    $request = Request::capture()
-)->send();
-
-$kernel->terminate($request, $response);
+    $kernel->terminate($request, $response);
+} catch (\Throwable $e) {
+    // Tampilkan detail error langsung ke layar jika terjadi crash
+    http_response_code(500);
+    echo '<h1>Deployment Error</h1>';
+    echo '<p><strong>Message:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>';
+    echo '<p><strong>File:</strong> ' . htmlspecialchars($e->getFile()) . ' on line ' . $e->getLine() . '</p>';
+    echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+}
