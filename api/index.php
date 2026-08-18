@@ -1,13 +1,30 @@
 <?php
 
-// Direct request file statis jika ada
-$uri = urldecode(
-    parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? ''
-);
+use Illuminate\Http\Request;
 
-if ($uri !== '/' && file_exists(__DIR__ . '/../public' . $uri)) {
-    return false;
+define('LARAVEL_START', microtime(true));
+
+// Alihkan folder storage & views Laravel ke /tmp (folder writable di Vercel)
+$_ENV['APP_STORAGE_PATH'] = '/tmp/storage';
+
+$directories = [
+    '/tmp/storage/framework/views',
+    '/tmp/storage/framework/cache/data',
+    '/tmp/storage/framework/sessions',
+    '/tmp/storage/logs',
+];
+
+foreach ($directories as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
 }
 
-// Teruskan request utama ke public/index.php Laravel
-require __DIR__ . '/../public/index.php';
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = require_once __DIR__ . '/../bootstrap/app.php';
+
+// Override path storage di instance aplikasi
+$app->useStoragePath('/tmp/storage');
+
+$app->handleRequest(Request::capture());
