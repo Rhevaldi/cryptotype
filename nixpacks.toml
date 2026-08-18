@@ -5,7 +5,10 @@ NIXPACKS_PHP_VERSION = '8.4'
 nixPkgs = ['php84', 'php84Packages.composer', 'nodejs_20']
 
 [phases.install]
-cmds = ['composer install --ignore-platform-reqs --no-interaction --prefer-dist']
+cmds = [
+  'composer install --ignore-platform-reqs --no-scripts --no-interaction --optimize-autoloader',
+  'npm install'
+]
 
 [phases.build]
 cmds = ['npm run build']
