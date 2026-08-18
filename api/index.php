@@ -4,7 +4,13 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// 1. Buat folder temporary di /tmp agar writable oleh Vercel
+// 1. Tangani file statis & favicon secara langsung agar tidak melempar 500
+$uri = urldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+if ($uri !== '/' && file_exists(__DIR__ . '/../public' . $uri)) {
+    return false;
+}
+
+// 2. Buat folder temporary wajib di /tmp
 $storagePath = '/tmp/storage';
 $directories = [
     $storagePath . '/framework/views',
@@ -19,16 +25,20 @@ foreach ($directories as $dir) {
     }
 }
 
-// 2. Set environment path sebelum bootstrap
+// 3. Set path environment & view compilation
 $_ENV['APP_STORAGE_PATH'] = $storagePath;
 putenv("VIEW_COMPILED_PATH={$storagePath}/framework/views");
 
-// 3. Autoload & Bootstrap Application
+// 4. Autoload Composer
 require __DIR__ . '/../vendor/autoload.php';
+
+// 5. Bootstrap Laravel Application
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// 4. Bind Storage Path secara eksplisit di Service Container
+// Bind storage path secara eksplisit
 $app->useStoragePath($storagePath);
 
-// 5. Tangani Request
-$app->handleRequest(Request::capture());
+// 6. Tangani Request & Kirim Response
+$request = Request::capture();
+$response = $app->handleRequest($request);
+$response->send();
