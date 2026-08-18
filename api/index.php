@@ -1,16 +1,17 @@
 <?php
 
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// 1. Tangani file statis & favicon secara langsung agar tidak melempar 500
+// 1. Layani berkas statis/favicon jika ada
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 if ($uri !== '/' && file_exists(__DIR__ . '/../public' . $uri)) {
     return false;
 }
 
-// 2. Buat folder temporary wajib di /tmp
+// 2. Siapkan direktori writable di /tmp
 $storagePath = '/tmp/storage';
 $directories = [
     $storagePath . '/framework/views',
@@ -25,20 +26,26 @@ foreach ($directories as $dir) {
     }
 }
 
-// 3. Set path environment & view compilation
-$_ENV['APP_STORAGE_PATH'] = $storagePath;
+// 3. Set environment variable darurat
+putenv("APP_STORAGE_PATH={$storagePath}");
 putenv("VIEW_COMPILED_PATH={$storagePath}/framework/views");
+putenv("CACHE_STORE=array");
+putenv("SESSION_DRIVER=cookie");
+
+if (!getenv('APP_KEY')) {
+    putenv("APP_KEY=base64:Ng47AWRkBEnNJLUxO3BrPop7gUTFARilAPmZc/jIP0A=");
+}
 
 // 4. Autoload Composer
 require __DIR__ . '/../vendor/autoload.php';
 
-// 5. Bootstrap Laravel Application
+// 5. Bootstrap Aplikasi
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// Bind storage path secara eksplisit
-$app->useStoragePath($storagePath);
+// 6. Tangani Request menggunakan Kernel/Runner bawaan
+$kernel = $app->make(Kernel::class);
+$response = $kernel->handle(
+    $request = Request::capture()
+)->send();
 
-// 6. Tangani Request & Kirim Response
-$request = Request::capture();
-$response = $app->handleRequest($request);
-$response->send();
+$kernel->terminate($request, $response);
