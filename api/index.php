@@ -4,27 +4,31 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Alihkan folder storage & views Laravel ke /tmp (folder writable di Vercel)
-$_ENV['APP_STORAGE_PATH'] = '/tmp/storage';
-
+// 1. Buat folder temporary di /tmp agar writable oleh Vercel
+$storagePath = '/tmp/storage';
 $directories = [
-    '/tmp/storage/framework/views',
-    '/tmp/storage/framework/cache/data',
-    '/tmp/storage/framework/sessions',
-    '/tmp/storage/logs',
+    $storagePath . '/framework/views',
+    $storagePath . '/framework/cache/data',
+    $storagePath . '/framework/sessions',
+    $storagePath . '/logs',
 ];
 
 foreach ($directories as $dir) {
     if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
+        @mkdir($dir, 0755, true);
     }
 }
 
-require __DIR__ . '/../vendor/autoload.php';
+// 2. Set environment path sebelum bootstrap
+$_ENV['APP_STORAGE_PATH'] = $storagePath;
+putenv("VIEW_COMPILED_PATH={$storagePath}/framework/views");
 
+// 3. Autoload & Bootstrap Application
+require __DIR__ . '/../vendor/autoload.php';
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// Override path storage di instance aplikasi
-$app->useStoragePath('/tmp/storage');
+// 4. Bind Storage Path secara eksplisit di Service Container
+$app->useStoragePath($storagePath);
 
+// 5. Tangani Request
 $app->handleRequest(Request::capture());
