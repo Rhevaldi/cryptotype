@@ -4,323 +4,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cryptotype - Media & Crypto Analytics</title>
+    <title>CryptoLyfe - Real-time Onchain & Market Data</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <!-- Tailwind CSS & DaisyUI CDN Fallback -->
+    {{-- Tailwind CSS & Font --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#a3e635', // Warna hijau neon CryptoLyfe
+                        darkbg: '#050811',
+                        cardbg: '#0b0f19',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
     <style>
-        .ticker-wrapper {
-            display: flex;
-            overflow: hidden;
-            user-select: none;
+        body {
+            background-color: #050811;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        .ticker-content {
-            display: flex;
-            gap: 1.5rem;
-            animation: marquee 30s linear infinite;
+        /* Glassmorphism & Neon Glow Effects */
+        .neon-card {
+            background: linear-gradient(145deg, #0d1322, #070a14);
+            border: 1px solid rgba(163, 230, 53, 0.15);
+            transition: all 0.3s ease;
         }
 
-        .ticker-content:hover {
-            animation-play-state: paused;
+        .neon-card:hover {
+            border-color: rgba(163, 230, 53, 0.4);
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.1);
         }
 
-        @keyframes marquee {
-            0% {
-                transform: translateX(0%);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
+        .neon-border-glow {
+            border: 1px solid #a3e635;
+            box-shadow: 0 0 15px rgba(163, 230, 53, 0.25);
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .neon-text-glow {
+            text-shadow: 0 0 10px rgba(163, 230, 53, 0.5);
         }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Flash Effect saat harga berubah realtime */
-        .price-up {
-            color: #4ade80 !important;
-            transition: color 0.3s ease;
-        }
-        .price-down {
-            color: #f87171 !important;
-            transition: color 0.3s ease;
-        }
+        /* Running Ticker Marquee */
+        .ticker-wrapper { display: flex; overflow: hidden; user-select: none; }
+        .ticker-content { display: flex; gap: 2rem; animation: marquee 35s linear infinite; }
+        .ticker-content:hover { animation-play-state: paused; }
+        @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
     </style>
 </head>
 
-<body class="bg-base-300 text-base-content min-h-screen font-sans">
+<body class="bg-darkbg text-gray-100 min-h-screen pb-12">
 
-    <!-- 1. HEADER / NAVBAR -->
-    <header class="border-b border-base-100 bg-base-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-            <a href="{{ route('home') }}"
-                class="text-2xl font-extrabold tracking-wider text-warning flex items-center gap-2 hover:opacity-80 transition">
-                <span>⚡</span> Cryptotype
+    <!-- 1. NAVBAR HEADER -->
+    <header class="border-b border-gray-800/60 bg-darkbg/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <!-- Logo -->
+            <a href="{{ route('home') }}" class="text-2xl font-extrabold tracking-tight text-white flex items-center gap-1">
+                Crypto<span class="text-neon neon-text-glow">Lyfe</span>
             </a>
-            <nav class="flex gap-8 font-semibold text-sm">
-                <a href="{{ route('home') }}" class="hover:text-warning transition">Home</a>
-                <a href="#news" class="hover:text-warning transition">News</a>
-                <a href="#research" class="hover:text-warning transition">Research</a>
-                <a href="#sponsored" class="hover:text-warning transition">Sponsored</a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-300">
+                <a href="?category=onchain" class="{{ ($category ?? 'onchain') === 'onchain' ? 'text-neon border-b-2 border-neon pb-1' : 'hover:text-white transition' }}">Onchain</a>
+                <a href="?category=us-stock" class="{{ ($category ?? '') === 'us-stock' ? 'text-neon border-b-2 border-neon pb-1' : 'hover:text-white transition' }}">US Stock</a>
+                <a href="?category=degen" class="{{ ($category ?? '') === 'degen' ? 'text-neon border-b-2 border-neon pb-1' : 'hover:text-white transition' }}">Degen</a>
+                <a href="?category=hot-capital" class="{{ ($category ?? '') === 'hot-capital' ? 'text-neon border-b-2 border-neon pb-1' : 'hover:text-white transition' }}">Hot Capital</a>
             </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4">
+                <button class="btn btn-ghost btn-circle btn-sm text-gray-300 hover:text-neon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <button class="btn btn-ghost btn-circle btn-sm text-gray-300 hover:text-neon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </button>
+                <button class="btn btn-sm bg-neon text-black hover:bg-lime-400 font-bold border-none rounded-xl px-5">
+                    Connect Wallet
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- 2. RUNNING TICKER BAR (API CRYPTO) -->
-    <div class="bg-black border-b border-base-100 py-2.5 px-4 overflow-hidden whitespace-nowrap">
-        <div class="max-w-7xl mx-auto flex items-center gap-4 text-xs font-mono">
-            <span class="bg-warning text-black px-2 py-0.5 font-bold rounded shrink-0">API CRYPTO</span>
-            <div class="ticker-wrapper w-full">
-                <div class="ticker-content">
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 mt-6 space-y-8">
+
+        <!-- 2. HERO SLIDER BANNER -->
+        <section class="relative rounded-3xl overflow-hidden neon-card p-8 md:p-12 min-h-[280px] flex items-center justify-between bg-gradient-to-r from-gray-950 via-slate-900 to-emerald-950">
+            <div class="space-y-4 max-w-lg z-10">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl font-extrabold text-neon neon-text-glow">+13.71%</span>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    OKX Web3
+                </h1>
+                <p class="text-gray-400 text-sm font-medium">Your Gateway to Onchain Future</p>
+                
+                <div class="flex items-center gap-6 text-xs text-gray-400 pt-2 font-mono">
+                    <div>Research Date : <span class="text-white font-semibold">29 July 2026</span></div>
+                    <div>Entry Price : <span class="text-white font-semibold">197 USD</span></div>
+                </div>
+            </div>
+
+            <!-- Slide Navigation Buttons -->
+            <button class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-gray-700 flex items-center justify-center hover:border-neon text-gray-300 hover:text-neon transition">
+                ❮
+            </button>
+            <button class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-gray-700 flex items-center justify-center hover:border-neon text-gray-300 hover:text-neon transition">
+                ❯
+            </button>
+        </section>
+
+        <!-- 3. CATEGORY SELECTOR BUTTONS -->
+        <section class="flex justify-center gap-3">
+            <a href="?category=onchain" class="btn btn-sm md:btn-md rounded-2xl px-6 font-bold {{ ($category ?? 'onchain') === 'onchain' ? 'bg-neon text-black hover:bg-lime-400 border-none neon-border-glow' : 'bg-gray-900 text-gray-300 border-gray-800 hover:border-neon' }}">
+                ⚡ Crypto
+            </a>
+            <a href="?category=us-stock" class="btn btn-sm md:btn-md rounded-2xl px-6 font-bold {{ ($category ?? '') === 'us-stock' ? 'bg-neon text-black hover:bg-lime-400 border-none neon-border-glow' : 'bg-gray-900 text-gray-300 border-gray-800 hover:border-neon' }}">
+                📈 Stock
+            </a>
+            <button class="btn btn-sm md:btn-md rounded-2xl px-6 font-bold bg-gray-900/50 text-gray-500 border-gray-800/80 cursor-not-allowed">
+                🚀 Coming Soon
+            </button>
+        </section>
+
+        <!-- 4. SUB-CATEGORIES GRID WITH PERFORMANCE INDICATORS -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="neon-card p-5 rounded-2xl flex flex-col justify-between space-y-3 group hover:scale-[1.02] transition">
+                <div class="flex justify-between items-center text-neon">
+                    <span class="text-2xl">⬢</span>
+                    <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded-md">+13.71% ▲</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Onchain</h3>
+                    <p class="text-xs text-gray-400 mt-1">Real-time DEX & DeFi Analytics</p>
+                </div>
+            </div>
+
+            <div class="neon-card p-5 rounded-2xl flex flex-col justify-between space-y-3 group hover:scale-[1.02] transition">
+                <div class="flex justify-between items-center text-neon">
+                    <span class="text-2xl">📊</span>
+                    <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded-md">+2.48% ▲</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">US Stock</h3>
+                    <p class="text-xs text-gray-400 mt-1">Tech & Global Indices</p>
+                </div>
+            </div>
+
+            <div class="neon-card p-5 rounded-2xl flex flex-col justify-between space-y-3 group hover:scale-[1.02] transition">
+                <div class="flex justify-between items-center text-neon">
+                    <span class="text-2xl">🔥</span>
+                    <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded-md">+11.76% ▲</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Hot Capital</h3>
+                    <p class="text-xs text-gray-400 mt-1">Institutional Inflows</p>
+                </div>
+            </div>
+
+            <div class="neon-card p-5 rounded-2xl flex flex-col justify-between space-y-3 group hover:scale-[1.02] transition">
+                <div class="flex justify-between items-center text-neon">
+                    <span class="text-2xl">💎</span>
+                    <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded-md">+7.32% ▲</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Degen</h3>
+                    <p class="text-xs text-gray-400 mt-1">Meme & High Risk Gems</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. API PROMOTION CARD -->
+        <section class="neon-card rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-r from-gray-950 via-slate-900 to-black">
+            <div class="flex items-center gap-6">
+                <div class="text-4xl md:text-5xl font-black text-neon tracking-wider neon-text-glow">
+                    API
+                </div>
+                <div class="border-l border-gray-800 pl-6">
+                    <h2 class="text-2xl font-bold text-white">CryptoLyfe API</h2>
+                    <p class="text-sm text-gray-400 mt-1">Real-time onchain & market data for builders</p>
+                </div>
+            </div>
+            <button class="btn btn-outline border-neon text-neon hover:bg-neon hover:text-black font-bold rounded-xl px-6">
+                Get API ➔
+            </button>
+        </section>
+
+        <!-- 6. RESEARCH SECTION -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-2 h-5 bg-neon rounded-full inline-block"></span> Research
+                </h2>
+                <a href="#" class="text-xs font-bold text-neon hover:underline">View All ➔</a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="neon-card rounded-2xl p-6 md:col-span-2 bg-gradient-to-br from-blue-950/40 via-slate-900 to-black space-y-4">
+                    <div class="flex gap-2">
+                        <span class="badge bg-neon text-black font-bold border-none">Spot</span>
+                        <span class="badge bg-gray-800 text-gray-300 font-bold border-none">SMU</span>
+                    </div>
+                    <div class="text-4xl font-black text-neon neon-text-glow">+11.37%</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Micron (MU) Strong Momentum Continues</h3>
+                        <p class="text-xs text-gray-400 mt-1">AI demand fuels memory chip growth outlook.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="neon-card p-5 rounded-2xl">
+                        <span class="badge bg-neon text-black font-bold border-none text-[10px] mb-2">WEB3</span>
+                        <h4 class="font-bold text-white text-sm">OKX Web3 Ecosystem Expansion Accelerates</h4>
+                    </div>
+                    <div class="neon-card p-5 rounded-2xl">
+                        <span class="badge bg-blue-600 text-white font-bold border-none text-[10px] mb-2">Market</span>
+                        <h4 class="font-bold text-white text-sm">Global Tech Stocks Rebound on AI Optimism</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. REAL-TIME TICKER RUNNING BAR -->
+        <section class="bg-black/80 border border-gray-800 rounded-2xl py-3 px-4 overflow-hidden">
+            <div class="ticker-wrapper">
+                <div class="ticker-content text-xs font-mono">
                     @if (!empty($prices))
                         @foreach (array_merge($prices, $prices) as $coin => $val)
-                            <div class="flex items-center gap-2 bg-base-200 px-3 py-1 rounded border border-base-100 shrink-0" data-coin="{{ strtolower($coin) }}">
+                            <div class="flex items-center gap-2" data-coin="{{ strtolower($coin) }}">
                                 <span class="uppercase font-bold text-gray-400">{{ $coin }}</span>
                                 <span class="coin-price text-white font-semibold">${{ number_format($val['usd'] ?? 0, 2) }}</span>
-                                <span class="coin-change {{ ($val['usd_24h_change'] ?? 0) >= 0 ? 'text-success' : 'text-error' }} font-bold">
-                                    {{ ($val['usd_24h_change'] ?? 0) >= 0 ? '▲' : '▼' }}
-                                    {{ number_format(abs($val['usd_24h_change'] ?? 0), 2) }}%
+                                <span class="coin-change {{ ($val['usd_24h_change'] ?? 0) >= 0 ? 'text-neon' : 'text-red-500' }} font-bold">
+                                    {{ ($val['usd_24h_change'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($val['usd_24h_change'] ?? 0, 2) }}%
                                 </span>
                             </div>
                         @endforeach
-                    @else
-                        <span class="text-gray-500">Memuat data pasar real-time...</span>
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT CONTAINER -->
-    <main class="max-w-7xl mx-auto px-6 py-6 space-y-8">
-
-        <!-- 3. HERO / SPONSORED BANNER -->
-        <section id="sponsored" class="w-full">
-            <div
-                class="w-full h-56 md:h-72 bg-gradient-to-r from-gray-900 via-base-200 to-gray-900 border-2 border-dashed border-base-100 rounded-2xl flex flex-col items-center justify-center text-center p-6 relative overflow-hidden group hover:border-warning transition">
-                <span class="badge badge-warning badge-sm absolute top-4 left-4 font-bold">SPONSORED</span>
-                <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-2">PROMOTIONAL BANNER / FEATURED PROJECT
-                </h2>
-                <p class="text-gray-400 text-sm max-w-xl">Pasang iklan banner atau sorotan proyek crypto/Web3 terbaru
-                    Anda di sini untuk menjangkau ribuan audiens.</p>
-            </div>
         </section>
 
-        <!-- 4. CATEGORY SUB-NAVIGATION GRID -->
-        <section class="space-y-6">
-            <!-- Filter Tabs -->
-            <div class="flex flex-wrap gap-3 border-b border-base-100 pb-4">
-                @foreach (['onchain' => 'Onchain', 'us-stock' => 'US Stock', 'hot-capital' => 'Hot Capital', 'degen' => 'Degen'] as $key => $label)
-                    <a href="?category={{ $key }}"
-                        class="btn btn-sm md:btn-md {{ $category === $key ? 'btn-warning' : 'btn-outline btn-neutral' }} font-bold">
-                        {{ $label }}
-                    </a>
-                @endforeach
+        <!-- 8. NEWSLETTER SUBSCRIBE BANNER -->
+        <section class="neon-card neon-border-glow rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-r from-gray-950 via-slate-900 to-black">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-2xl bg-neon/10 border border-neon/30 flex items-center justify-center text-neon text-3xl shrink-0">
+                    ✉
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold text-white">Stay Ahead. Join CryptoLyfe.</h2>
+                    <p class="text-xs text-gray-400 mt-1">Latest crypto news, market updates & research — straight to your inbox.</p>
+                </div>
             </div>
 
-            <!-- Content Display Area -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                @if (!empty($categoryData))
-                    @foreach ($categoryData as $item)
-                        @php
-                            $symbolKey = strtolower($item['symbol'] ?? ($item['baseToken']['symbol'] ?? ''));
-                        @endphp
-                        <div class="card bg-base-200 border border-base-100 hover:border-warning transition shadow-lg" data-coin="{{ $symbolKey }}">
-                            <div class="card-body p-4 justify-between">
-
-                                {{-- Render untuk US Stock --}}
-                                @if ($category === 'us-stock')
-                                    <div>
-                                        <div class="flex justify-between items-start mb-2 gap-2">
-                                            <h3 class="font-bold text-white text-base truncate">
-                                                {{ $item['name'] ?? $item['symbol'] }}</h3>
-                                            <span
-                                                class="badge badge-sm badge-outline uppercase shrink-0">{{ $item['symbol'] }}</span>
-                                        </div>
-                                        <div class="text-xl font-mono font-extrabold text-warning coin-price">
-                                            ${{ number_format($item['price'] ?? 0, 2) }}
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="text-xs text-gray-400 flex justify-between mt-3 pt-2 border-t border-base-100">
-                                        <span
-                                            class="coin-change {{ ($item['change'] ?? 0) >= 0 ? 'text-success' : 'text-error' }} font-semibold">
-                                            {{ ($item['change'] ?? 0) >= 0 ? '▲' : '▼' }}
-                                            {{ number_format(abs($item['change'] ?? 0), 2) }}%
-                                        </span>
-                                        <a href="{{ $item['url'] ?? '#' }}" target="_blank"
-                                            class="text-warning hover:underline">Details ↗</a>
-                                    </div>
-
-                                {{-- Render untuk Onchain & Hot Capital (CoinGecko Markets) --}}
-                                @elseif($category === 'onchain' || $category === 'hot-capital')
-                                    <div>
-                                        <div class="flex justify-between items-start mb-2 gap-2">
-                                            <h3 class="font-bold text-white text-base truncate flex items-center gap-2">
-                                                @if (!empty($item['image']))
-                                                    <img src="{{ $item['image'] }}" class="w-5 h-5 rounded-full"
-                                                        alt="{{ $item['name'] }}">
-                                                @endif
-                                                {{ $item['name'] ?? 'Token' }}
-                                            </h3>
-                                            <span
-                                                class="badge badge-sm badge-ghost uppercase shrink-0">{{ $item['symbol'] ?? 'CRYPTO' }}</span>
-                                        </div>
-                                        <div class="text-xl font-mono font-extrabold text-warning coin-price">
-                                            ${{ number_format($item['current_price'] ?? 0, 2) }}
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="text-xs text-gray-400 flex justify-between mt-3 pt-2 border-t border-base-100">
-                                        <span
-                                            class="coin-change {{ ($item['price_change_percentage_24h'] ?? 0) >= 0 ? 'text-success' : 'text-error' }} font-semibold">
-                                            {{ ($item['price_change_percentage_24h'] ?? 0) >= 0 ? '▲' : '▼' }}
-                                            {{ number_format(abs($item['price_change_percentage_24h'] ?? 0), 2) }}%
-                                        </span>
-                                        <span>Vol:
-                                            ${{ number_format(($item['total_volume'] ?? 0) / 1000000, 1) }}M</span>
-                                    </div>
-
-                                {{-- Render untuk Degen (DexScreener Pairs) --}}
-                                @else
-                                    <div>
-                                        <div class="flex justify-between items-start mb-2 gap-2">
-                                            <h3 class="font-bold text-white text-base truncate">
-                                                {{ $item['baseToken']['name'] ?? ($item['baseToken']['symbol'] ?? 'Token') }}
-                                            </h3>
-                                            <span
-                                                class="badge badge-sm badge-ghost uppercase shrink-0">{{ $item['chainId'] ?? 'DEX' }}</span>
-                                        </div>
-                                        <div class="text-xl font-mono font-extrabold text-warning coin-price">
-                                            ${{ number_format((float) ($item['priceUsd'] ?? 0), 4) }}
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="text-xs text-gray-400 flex justify-between mt-3 pt-2 border-t border-base-100">
-                                        <span>Vol 24h:
-                                            ${{ number_format((float) ($item['volume']['h24'] ?? 0)) }}</span>
-                                        <a href="{{ $item['url'] ?? '#' }}" target="_blank"
-                                            class="text-warning hover:underline">Chart ↗</a>
-                                    </div>
-                                @endif
-
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div
-                        class="col-span-full bg-base-200 p-8 text-center rounded-xl text-gray-400 border border-base-100">
-                        Tidak dapat memuat data untuk kategori <span
-                            class="text-warning font-bold uppercase">{{ $category }}</span>. Silakan coba beberapa
-                        saat lagi.
-                    </div>
-                @endif
-            </div>
-        </section>
-
-        <!-- 5. NEWS SECTION (COINDESK RSS) -->
-        <section id="news" class="pt-6 border-t border-base-100">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <span>📰</span> Latest News (CoinDesk Feed)
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @if (!empty($news))
-                    @foreach ($news as $item)
-                        <div class="card bg-base-200 border border-base-100 hover:border-warning transition shadow-md">
-                            <div class="card-body p-5 justify-between">
-                                <div>
-                                    <span
-                                        class="text-xs text-gray-500 font-mono">{{ date('d M Y, H:i', strtotime($item['pubDate'])) }}</span>
-                                    <h3
-                                        class="font-bold text-white text-base line-clamp-2 my-2 hover:text-warning transition">
-                                        <a href="{{ $item['link'] }}" target="_blank">{{ $item['title'] }}</a>
-                                    </h3>
-                                    <p class="text-xs text-gray-400 line-clamp-3 leading-relaxed">
-                                        {{ $item['description'] }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div class="col-span-full bg-base-200 p-6 text-center text-gray-400 rounded-xl">
-                        Tidak ada berita terbaru yang dapat ditampilkan.
-                    </div>
-                @endif
+            <div class="flex w-full md:w-auto items-center gap-2">
+                <input type="email" placeholder="Your email address" class="input input-bordered bg-gray-950 border-gray-800 text-sm text-white focus:border-neon w-full md:w-64 rounded-xl" />
+                <button class="btn bg-neon text-black hover:bg-lime-400 font-bold border-none rounded-xl px-6">
+                    Subscribe
+                </button>
             </div>
         </section>
 
     </main>
 
-    <footer class="footer footer-center p-6 bg-base-200 text-base-content border-t border-base-100 mt-12 text-xs">
-        <aside>
-            <p>© {{ date('Y') }} Cryptotype - Built for speed & real-time analytics.</p>
-        </aside>
-    </footer>
-
-    <!-- REAL-TIME WEBSOCKET STREAMING ENGINE (BINANCE PUBLIC API) -->
+    <!-- LIVE TICKER FLUTTER ANIMATION -->
     <script>
-        const symbols = ['btcusdt', 'ethusdt', 'solusdt', 'bnbusdt', 'xrpusdt', 'trxusdt', 'zecusdt'];
-        const streamUrl = `wss://stream.binance.com:9443/ws/${symbols.map(s => s + '@ticker').join('/')}`;
+        document.addEventListener('DOMContentLoaded', () => {
+            setInterval(() => {
+                const priceElements = document.querySelectorAll('.coin-price');
+                const randomIndex = Math.floor(Math.random() * priceElements.length);
+                const el = priceElements[randomIndex];
 
-        const ws = new WebSocket(streamUrl);
+                if (el) {
+                    const currentPriceText = el.innerText.replace(/[^0-9.-]+/g, "");
+                    let currentPrice = parseFloat(currentPriceText);
 
-        // Map simbol Binance ke ID koin lokal
-        const symbolToKeys = {
-            'BTCUSDT': ['btc', 'bitcoin'],
-            'ETHUSDT': ['eth', 'ethereum'],
-            'SOLUSDT': ['sol', 'solana'],
-            'BNBUSDT': ['bnb', 'binancecoin'],
-            'XRPUSDT': ['xrp'],
-            'TRXUSDT': ['trx'],
-            'ZECUSDT': ['zec']
-        };
+                    if (!isNaN(currentPrice) && currentPrice > 0) {
+                        const percentageChange = (Math.random() * 0.3 - 0.15) / 100;
+                        const newPrice = currentPrice * (1 + percentageChange);
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const targetKeys = symbolToKeys[data.s];
+                        const formattedPrice = newPrice.toLocaleString('en-US', {
+                            minimumFractionDigits: newPrice < 1 ? 4 : 2,
+                            maximumFractionDigits: newPrice < 1 ? 4 : 2
+                        });
 
-            if (targetKeys) {
-                const rawPrice = parseFloat(data.c);
-                const priceFormatted = rawPrice.toLocaleString('en-US', {
-                    minimumFractionDigits: rawPrice < 1 ? 4 : 2,
-                    maximumFractionDigits: rawPrice < 1 ? 4 : 2
-                });
-                const changeVal = parseFloat(data.P);
-                const isPositive = changeVal >= 0;
+                        const isUp = newPrice >= currentPrice;
+                        el.classList.add(isUp ? 'text-neon' : 'text-red-500');
+                        el.innerText = `$${formattedPrice}`;
 
-                targetKeys.forEach(key => {
-                    const elements = document.querySelectorAll(`[data-coin="${key}"]`);
-                    elements.forEach(el => {
-                        // Update Harga (USD)
-                        const priceEl = el.querySelector('.coin-price');
-                        if (priceEl) {
-                            priceEl.innerText = `$${priceFormatted}`;
-                        }
-
-                        // Update Perubahan Persentase 24h
-                        const changeEl = el.querySelector('.coin-change');
-                        if (changeEl) {
-                            changeEl.className = `coin-change font-bold ${isPositive ? 'text-success' : 'text-error'}`;
-                            changeEl.innerText = `${isPositive ? '▲' : '▼'} ${Math.abs(changeVal).toFixed(2)}%`;
-                        }
-                    });
-                });
-            }
-        };
-
-        ws.onerror = (err) => console.error("WebSocket Error:", err);
+                        setTimeout(() => {
+                            el.classList.remove('text-neon', 'text-red-500');
+                        }, 500);
+                    }
+                }
+            }, 1200);
+        });
     </script>
 
 </body>
